@@ -1,0 +1,52 @@
+# Put any initialization logic here.  The context object will be passed to
+# the other methods in your algorithm.
+from __future__ import division
+import numpy
+import pandas
+from sklearn.neighbors import KNeighborsClassifier
+
+def initialize(context):
+    print context
+
+# Will be called on every trade event for the securities you specify. 
+def handle_data(context, data):
+    
+    
+    # Implement your algorithm logic here.
+
+    # data[sid(X)] holds the trade event data for that security.
+    # context.portfolio holds the current portfolio state.
+
+    # Place orders with the order(SID, amount) method.
+    print context.fundamental_df
+    
+    explanatory_variables = context.fundamental_df.values
+    print explanatory_variables
+    # TODO: implement your own logic here.
+    order(sid(24), 50)
+    
+def before_trading_start(context): 
+    fundamental_df = get_fundamentals(
+        # Retrieve data based on PE ratio and economic sector
+        query(
+            fundamentals.valuation_ratios.pe_ratio,
+            fundamentals.asset_classification.morningstar_sector_code,
+        )
+
+        # Filter where the Sector code matches our technology sector code
+        .filter(fundamentals.asset_classification.morningstar_sector_code == 311)
+
+        # Filter where PE ratio is greater than 20 
+        .filter(fundamentals.valuation_ratios.pe_ratio > 20)
+
+        # Filter where PE ratio is less than 50
+        .filter(fundamentals.valuation_ratios.pe_ratio < 50)
+
+        # Order by highest PE ratio and limit to 4 results 
+        .order_by(fundamentals.valuation_ratios.pe_ratio.desc()).limit(4)
+    )
+    context.fundamental_df = fundamental_df
+    
+    
+    
+    
