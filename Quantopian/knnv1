@@ -6,7 +6,14 @@ import pandas
 from sklearn.neighbors import KNeighborsClassifier
 
 def initialize(context):
-    print context
+    context.highs = []
+    context.lows = []
+    context.closes = []
+    context.prices = []
+    pass
+   # print fscv
+                    
+   # print context
 
 # Will be called on every trade event for the securities you specify. 
 def handle_data(context, data):
@@ -17,11 +24,49 @@ def handle_data(context, data):
     # data[sid(X)] holds the trade event data for that security.
     # context.portfolio holds the current portfolio state.
 
+    CROSS_VALIDATION_AMOUNT = 0.2
     # Place orders with the order(SID, amount) method.
-    print context.fundamental_df
     
     explanatory_variables = context.fundamental_df.values
-    print explanatory_variables
+    data_point = data[symbol('AAPL')]
+    context.highs.append(data_point.high)
+    context.lows.append(data_point.low)
+    context.closes.append(data_point.close_price)
+    context.prices.append(data_point.price)
+    
+    
+    d = {"highs":context.highs, "lows":context.lows, "closes":context.closes, "prices":context.prices}
+    df = pandas.DataFrame(data=d)
+
+    d = {"highs":context.highs, "lows":context.lows, "closes":context.closes }
+    explanatory_series = pandas.DataFrame(data=d, index = df.index)
+    
+    d = {"prices":context.prices}
+    response_series = pandas.DataFrame(data=d, index = df.index)
+    
+    holdout_amount = round(len(response_series.index) * CROSS_VALIDATION_AMOUNT, 0)
+    print holdout_amount
+    
+    print df
+    print explanatory_series
+    print response_series
+    
+    if holdout_amount > 2 and len(df.index) > 1/CROSS_VALIDATION_AMOUNT:
+        test_indices = df.index[df.index.isin(numpy.random.choice(df.index, holdout_amount, replace = False))]
+        train_indices = df.index[~df.index.isin(test_indices)]
+        
+        print test_indices
+        print train_indices
+        
+        print response_series.ix
+        print explanatory_series.ix
+        
+        response_train = response_series.ix[train_indices,]
+        explanatory_train = explanatory_series.ix[train_indices,]
+
+        response_test = response_series.ix[test_indices,]
+        explanatory_test = explanatory_series.ix[test_indices,]
+    
     # TODO: implement your own logic here.
     order(sid(24), 50)
     
@@ -30,20 +75,16 @@ def before_trading_start(context):
         # Retrieve data based on PE ratio and economic sector
         query(
             fundamentals.valuation_ratios.pe_ratio,
-            fundamentals.asset_classification.morningstar_sector_code,
+            fundamentals.earnings_report.basic_eps,
+            fundamentals.asset_classification.morningstar_sector_code
         )
 
         # Filter where the Sector code matches our technology sector code
         .filter(fundamentals.asset_classification.morningstar_sector_code == 311)
 
-        # Filter where PE ratio is greater than 20 
-        .filter(fundamentals.valuation_ratios.pe_ratio > 20)
-
-        # Filter where PE ratio is less than 50
-        .filter(fundamentals.valuation_ratios.pe_ratio < 50)
 
         # Order by highest PE ratio and limit to 4 results 
-        .order_by(fundamentals.valuation_ratios.pe_ratio.desc()).limit(4)
+        .order_by(fundamentals.valuation_ratios.pe_ratio.desc())
     )
     context.fundamental_df = fundamental_df
     
