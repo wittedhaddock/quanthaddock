@@ -39,33 +39,32 @@ def handle_data(context, data):
     df = pandas.DataFrame(data=d)
 
     d = {"highs":context.highs, "lows":context.lows, "closes":context.closes }
-    explanatory_series = pandas.DataFrame(data=d, index = df.index)
+    explanatory_series = df[["highs", "lows", "closes"]]
     
     d = {"prices":context.prices}
-    response_series = pandas.DataFrame(data=d, index = df.index)
+    response_series = df.prices
     
-    holdout_amount = round(len(response_series.index) * CROSS_VALIDATION_AMOUNT, 0)
+    holdout_amount = int(round(len(response_series.index) * CROSS_VALIDATION_AMOUNT, 0))
     print holdout_amount
     
-    print df
-    print explanatory_series
-    print response_series
+
     
     if holdout_amount > 2 and len(df.index) > 1/CROSS_VALIDATION_AMOUNT:
         test_indices = df.index[df.index.isin(numpy.random.choice(df.index, holdout_amount, replace = False))]
         train_indices = df.index[~df.index.isin(test_indices)]
         
-        print test_indices
-        print train_indices
-        
-        print response_series.ix
-        print explanatory_series.ix
-        
-        response_train = response_series.ix[train_indices,]
-        explanatory_train = explanatory_series.ix[train_indices,]
+        response_train = response_series.ix[train_indices]
+        explanatory_train = explanatory_series.ix[train_indices]
 
-        response_test = response_series.ix[test_indices,]
-        explanatory_test = explanatory_series.ix[test_indices,]
+        response_test = response_series.ix[test_indices]
+        explanatory_test = explanatory_series.ix[test_indices]
+        
+        KNN_Classifier = KNeighborsClassifier(n_neighbors = 3, p = 2)
+        KNN_Classifier.fit(explanatory_train, response_train);
+        predicted_response = KNN_Classifier.predict(explanatory_test);
+        
+        numberCorrect = response_test[predicted_response == response_test];
+        print len(numberCorrect)
     
     # TODO: implement your own logic here.
     order(sid(24), 50)
