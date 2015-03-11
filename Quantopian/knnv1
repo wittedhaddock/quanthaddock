@@ -59,15 +59,22 @@ def handle_data(context, data):
         response_test = response_series.ix[test_indices]
         explanatory_test = explanatory_series.ix[test_indices]
         
-        KNN_Classifier = KNeighborsClassifier(n_neighbors = 3, p = 2)
+        KNN_Classifier = KNeighborsClassifier(n_neighbors = 7, p = 2)
         KNN_Classifier.fit(explanatory_train, response_train);
         predicted_response = KNN_Classifier.predict(explanatory_test);
         
         numberCorrect = response_test[predicted_response == response_test];
-        print len(numberCorrect)
+
+        diffInterval = []
+        for i, j in zip(predicted_response, response_test):
+            diffInterval.append(abs(i - j))
+        confidenceInterval = sum(diffInterval)
+        if confidenceInterval < 3:
+            order(sid(25), 50 * confidenceInterval)
+        if confidenceInterval > 4:
+            order(sid(25), -50 * confidenceInterval);
     
     # TODO: implement your own logic here.
-    order(sid(24), 50)
     
 def before_trading_start(context): 
     fundamental_df = get_fundamentals(
